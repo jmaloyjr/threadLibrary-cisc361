@@ -5,13 +5,15 @@ tcb* end_queue;
 
 void t_yield()
 {
-  /*ucontext_t *tmp;
+  tcb *tmp;
 
   tmp = running;
-  running = ready;
-  ready = tmp;
+  running = running->next;
+  end_queue->next = tmp;
+  end_queue = tmp;
+  end_queue->next = NULL;
 
-  swapcontext(ready, running);*/
+  swapcontext(&tmp->thread_context, &running->thread_context);
 }
 
 void t_init()
@@ -67,7 +69,6 @@ int t_create(void (*fct)(int), int id, int pri)
   uc->thread_context.uc_stack.ss_sp = malloc(sz);  /* new statement */
   uc->thread_context.uc_stack.ss_size = sz;
   uc->thread_context.uc_stack.ss_flags = 0;
-  uc->thread_context.uc_link = running;
 
   makecontext(&uc->thread_context, (void (*)(void)) fct, 1, id);
 
@@ -76,4 +77,18 @@ int t_create(void (*fct)(int), int id, int pri)
   end_queue->next = NULL;
 
   return 0;
+}
+
+void t_terminate(){
+
+    if(running->next == NULL){
+      exit;
+    }
+
+    tcb *tmp = running;
+    running = running->next;
+    free(tmp->thread_context.uc_stack.ss_sp);
+    free(tmp);
+
+    setcontext(&tmp->thread_context);
 }
