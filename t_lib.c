@@ -1,26 +1,56 @@
 #include "t_lib.h"
 
-ucontext_t *running;
-ucontext_t *ready;
+tcb* running;
+tcb* end_queue;
 
 void t_yield()
 {
-  ucontext_t *tmp;
+  /*ucontext_t *tmp;
 
   tmp = running;
   running = ready;
   ready = tmp;
 
-  swapcontext(ready, running);
+  swapcontext(ready, running);*/
 }
 
 void t_init()
 {
+
+  /*  ORIGINAL IMPLEMENTATION
   ucontext_t *tmp;
   tmp = (ucontext_t *) malloc(sizeof(ucontext_t));
 
-  getcontext(tmp);    /* let tmp be the context of main() */
+  getcontext(tmp);    /* let tmp be the context of main() 
   running = tmp;
+  */
+
+  tcb *tmp;
+  tmp = (tcb *) malloc(sizeof(tcb));
+  tmp->next = NULL;
+  tmp->thread_priority = 1;
+
+  /* let tmp be the context of main() */
+  getcontext(&tmp->thread_context);
+  running = tmp;
+  end_queue = tmp;
+
+ 
+
+
+  
+}
+
+void t_shutdown(){
+
+  //free all
+  while(running != NULL){
+    tcb *tmp = running;
+    running = running->next;
+    free(tmp->thread_context.uc_stack.ss_sp);
+    free(tmp);
+  }
+  
 }
 
 int t_create(void (*fct)(int), int id, int pri)
