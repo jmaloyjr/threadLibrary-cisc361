@@ -57,19 +57,23 @@ int t_create(void (*fct)(int), int id, int pri)
 {
   size_t sz = 0x10000;
 
-  ucontext_t *uc;
-  uc = (ucontext_t *) malloc(sizeof(ucontext_t));
+  tcb *uc;
+  uc = (tcb*) malloc(sizeof(tcb));
+  uc->thread_id = id;
+  uc->thread_priority = pri;
 
-  getcontext(uc);
-/***
-  uc->uc_stack.ss_sp = mmap(0, sz,
-       PROT_READ | PROT_WRITE | PROT_EXEC,
-       MAP_PRIVATE | MAP_ANON, -1, 0);
-***/
-  uc->uc_stack.ss_sp = malloc(sz);  /* new statement */
-  uc->uc_stack.ss_size = sz;
-  uc->uc_stack.ss_flags = 0;
-  uc->uc_link = running; 
-  makecontext(uc, (void (*)(void)) fct, 1, id);
-  ready = uc;
+  getcontext(&uc->thread_context);
+
+  uc->thread_context.uc_stack.ss_sp = malloc(sz);  /* new statement */
+  uc->thread_context.uc_stack.ss_size = sz;
+  uc->thread_context.uc_stack.ss_flags = 0;
+  uc->thread_context.uc_link = running;
+
+  makecontext(&uc->thread_context, (void (*)(void)) fct, 1, id);
+
+  end_queue->next = uc;
+  end_queue = uc;
+  end_queue->next = NULL;
+
+  return 0;
 }
