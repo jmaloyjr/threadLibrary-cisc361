@@ -82,13 +82,14 @@ int t_create(void (*fct)(int), int id, int pri)
 void t_terminate(){
 
     if(running->next == NULL){
-      exit;
+      return;
     }
 
     tcb *tmp = running;
     running = running->next;
-    free(tmp->thread_context.uc_stack.ss_sp);
-    free(tmp);
+    //free(tmp->thread_context.uc_stack.ss_sp);
+    //free(tmp);
 
-    setcontext(&tmp->thread_context);
+    setcontext(&running->thread_context);
+    
 }
